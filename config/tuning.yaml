@@ -1,0 +1,22 @@
+# Noise filters. Every suppression has an owner, a reason and an expiry: tuning is never permanent.
+# Rules learned from human "false positive" decisions are appended to state/learned-suppressions.yaml.
+suppressions:
+  - id: SUP-001
+    match: {rule: waf-sqli-probe, attribute: {src_ip: 203.0.113.50}}
+    reason: Authorised external vulnerability scanner (Qualys) weekly scan
+    owner: appsec
+    expires: "2027-06-30"
+  - id: SUP-002
+    match: {rule: mass-file-read, entity: backup-svc-01}
+    reason: Nightly backup job reads every file by design
+    owner: it-ops
+    expires: "2027-03-31"
+  - id: SUP-003
+    match: {source: cspm, attribute: {env: sandbox}}
+    reason: Developer sandbox subscriptions are out of scope for prod posture alerts
+    owner: cloud-security
+    expires: "2027-01-31"
+
+triage:
+  correlation_bonus: 0.3     # per additional independent source on the same entity
+  review_top_n: 10

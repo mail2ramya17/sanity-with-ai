@@ -1,0 +1,33 @@
+# Compliance evidence: each control is checked against exported configuration snapshots.
+# Before: screenshot 50 consoles. After: collect, hash and map evidence to controls automatically.
+controls:
+  - id: MFA-ADMINS
+    title: MFA enforced for all privileged accounts
+    frameworks: {SOC2: CC6.1, ISO27001: A.8.5, NIST_CSF: PR.AA-03}
+    evidence: entra_conditional_access.json
+    check: {path: policies, where: {name: "Require MFA for admins"}, field: state, equals: enabled}
+  - id: STORAGE-PRIVATE
+    title: No storage account allows public blob access
+    frameworks: {SOC2: CC6.6, ISO27001: A.8.20, NIST_CSF: PR.DS-01}
+    evidence: storage_accounts.json
+    check: {path: accounts, all: {field: allowBlobPublicAccess, equals: false}}
+  - id: KV-LOGGING
+    title: Diagnostic logging enabled on every Key Vault
+    frameworks: {SOC2: CC7.2, ISO27001: A.8.15, NIST_CSF: DE.CM-09}
+    evidence: key_vaults.json
+    check: {path: vaults, all: {field: diagnosticsEnabled, equals: true}}
+  - id: KEY-ROTATION
+    title: Access keys rotated within 90 days
+    frameworks: {SOC2: CC6.1, ISO27001: A.5.17, NIST_CSF: PR.AA-01}
+    evidence: access_keys.json
+    check: {path: keys, all: {field: ageDays, max: 90}}
+  - id: EDR-COVERAGE
+    title: EDR sensor healthy on all production servers
+    frameworks: {SOC2: CC7.1, ISO27001: A.8.7, NIST_CSF: DE.CM-01}
+    evidence: edr_devices.json
+    check: {path: devices, where: {env: prod}, all: {field: sensorHealthy, equals: true}}
+  - id: DORMANT-ADMINS
+    title: No privileged account dormant for more than 90 days
+    frameworks: {SOC2: CC6.2, ISO27001: A.5.18, NIST_CSF: PR.AA-05}
+    evidence: privileged_accounts.json
+    check: {path: accounts, all: {field: lastSignInDays, max: 90}}

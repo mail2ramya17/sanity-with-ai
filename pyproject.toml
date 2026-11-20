@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sanity-with-ai"
+version = "0.1.0"
+description = "AI-assisted security operations loop: AI carries the volume, humans keep the judgment"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "Ramya Kanderi"}]
+requires-python = ">=3.10"
+dependencies = ["pyyaml>=6.0"]
+
+[project.optional-dependencies]
+llm = ["openai>=1.40"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+sanity = "sanity.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["sanity*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

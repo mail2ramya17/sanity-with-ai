@@ -1,0 +1,8 @@
+# Default rules. Guardrail regexes and test fixtures build secret-LOOKING values at runtime from
+# fragments; these files are allow-listed in case a rule matches their source text.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Guardrail patterns and synthetic test fixtures"
+paths = ['''sanity/guardrails\.py''', '''sanity/samples\.py''', '''tests/test_loop\.py''']

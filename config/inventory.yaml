@@ -1,0 +1,22 @@
+# Asset and identity context used for enrichment (owner, criticality, blast radius).
+# In production this comes from the CMDB, Entra ID / IAM and cloud resource graphs.
+assets:
+  payroll-db-01:   {type: vm, owner: finance-platform, criticality: crown_jewel, env: prod, internet_facing: false, connects_to: [payroll-app, kv-finance]}
+  payroll-app:     {type: app_service, owner: finance-platform, criticality: high, env: prod, internet_facing: true, connects_to: [payroll-db-01]}
+  kv-finance:      {type: key_vault, owner: finance-platform, criticality: crown_jewel, env: prod, internet_facing: false, connects_to: []}
+  stg-customer-exports: {type: storage, owner: data-platform, criticality: crown_jewel, env: prod, internet_facing: true, data: [pii], connects_to: []}
+  aks-prod:        {type: kubernetes, owner: platform-eng, criticality: high, env: prod, internet_facing: true, connects_to: [kv-platform, acr-prod]}
+  kv-platform:     {type: key_vault, owner: platform-eng, criticality: high, env: prod, internet_facing: false, connects_to: []}
+  acr-prod:        {type: registry, owner: platform-eng, criticality: high, env: prod, internet_facing: false, connects_to: [aks-prod]}
+  web-legacy-02:   {type: vm, owner: marketing-web, criticality: medium, env: prod, internet_facing: true, connects_to: []}
+  dev-laptop-117:  {type: endpoint, owner: r.patel, criticality: low, env: corp, internet_facing: false, connects_to: []}
+  kv-shared:       {type: key_vault, owner: security, criticality: high, env: prod, internet_facing: false, connects_to: []}
+  backup-svc-01:   {type: vm, owner: it-ops, criticality: medium, env: prod, internet_facing: false, connects_to: []}
+  mailbox:cfo:     {type: mailbox, owner: exec-office, criticality: high, env: corp, internet_facing: true, connects_to: []}
+
+identities:
+  j.admin:    {owner: it-ops, manager: m.chen, privileged: true, roles: [Global Administrator], connects_to: [kv-finance, kv-platform, kv-shared, aks-prod, payroll-db-01]}
+  svc-deploy: {owner: platform-eng, manager: a.okafor, privileged: true, roles: [Contributor], connects_to: [aks-prod, acr-prod, stg-customer-exports]}
+  old.admin:  {owner: it-ops, manager: m.chen, privileged: true, roles: [User Administrator], dormant_days: 120, connects_to: [kv-shared]}
+
+criticality_weight: {low: 0.5, medium: 1.0, high: 1.5, crown_jewel: 2.0}

@@ -1,0 +1,17 @@
+# Action catalog. The AI may only PROPOSE actions from this list.
+# Every action needs a recorded human approval, and runs under its own narrowly scoped identity.
+ai_identity_scopes: [alerts:read, inventory:read, logs:read]   # read-only by default; no admin keys
+
+actions:
+  revoke_sessions:        {for: [account_compromise], scope: "graph:User.RevokeSessions", reversible: true,  impact: low}
+  reset_password:         {for: [account_compromise], scope: "graph:User.ResetPassword",  reversible: true,  impact: medium}
+  disable_account:        {for: [account_compromise, dormant_privileged], scope: "graph:User.Disable", reversible: true, impact: high}
+  isolate_host:           {for: [malware], scope: "edr:Machine.Isolate", reversible: true, impact: high}
+  block_public_access:    {for: [data_exposure], scope: "storage:Account.UpdateNetworkRules", reversible: true, impact: medium}
+  deactivate_access_key:  {for: [credential_misuse], scope: "iam:AccessKey.Deactivate", reversible: true, impact: medium}
+  delete_pod:             {for: [cryptomining], scope: "k8s:pods.delete@namespace", reversible: false, impact: medium}
+  purge_email:            {for: [phishing], scope: "mail:Messages.Purge", reversible: false, impact: low}
+  open_fix_pr:            {for: [misconfiguration, vulnerable_host], scope: "repo:pull_requests.write(draft)", reversible: true, impact: low}
+  enable_diagnostic_logs: {for: [logging_gap], scope: "monitor:DiagnosticSettings.Write", reversible: true, impact: low}
+  escalate:               {for: ["*"], scope: "itsm:Incident.Create", reversible: true, impact: low}
+  close_false_positive:   {for: ["*"], scope: "alerts:write", reversible: true, impact: low}

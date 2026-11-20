@@ -1,0 +1,85 @@
+
+=== 1. Signals → AI triage → AI enrich (run 1) ===
+1,798 open alerts → 1,130 suppressed as known noise → 107 incidents → top 10 for you (97 alerts behind them)
+
+  Incident  Score  Severity Key                                   Proposed (needs approval)
+  INC-001    23.4  critical malware:payroll-db-01                 isolate_host ⚠ prompt_injection_in_alert_data
+  INC-002   17.29  high     data_exposure:stg-customer-exports    block_public_access
+  INC-003   16.38  high     account_compromise:j.admin            revoke_sessions, reset_password
+  INC-004   12.29  high     credential_misuse:svc-deploy          deactivate_access_key
+  INC-005    9.45  high     cryptomining:aks-prod                 delete_pod
+  INC-006     8.4  high     dormant_privileged:old.admin          disable_account
+  INC-007     6.3  high     vulnerable_host:web-legacy-02         open_fix_pr
+  INC-008    6.24  medium   phishing:mailbox:cfo                  purge_email
+  INC-009     6.0  medium   logging_gap:kv-shared                 enable_diagnostic_logs
+  INC-010    3.64  medium   data_exfiltration:s.kim               escalate
+
+INC-001 AI summary: 10 alerts from edr, siem on payroll-db-01 since 03:00 UTC point to malware activity on a host.
+  Why it matters: payroll-db-01 is crown jewel; can reach crown jewels: kv-finance; corroborated by independent sources
+  ⚠ Prompt injection found inside the alert data. Treated as data; the verdict and actions were not changed.
+
+=== 2. Guardrail: the AI tries to act on its own ===
+REFUSED: AI identity has scopes ['alerts:read', 'inventory:read', 'logs:read']; edr:Machine.Isolate requires a human-approved executor
+REFUSED: only a named human can decide; AI suggests, it never decides
+
+=== 3. Human decision ===
+INC-001  APPROVE   malware:payroll-db-01                  confirmed C2 beaconing
+INC-002  APPROVE   data_exposure:stg-customer-exports     customer PII publicly readable
+INC-003  APPROVE   account_compromise:j.admin             MFA fatigue followed by approved prompt
+INC-010  REJECT    data_exfiltration:s.kim                false positive: approved OneDrive sync for a laptop migration
+INC-008  ESCALATE  phishing:mailbox:cfo                   send to the email security team
+
+=== 4. Act: only approved actions, each with its own scoped credential (dry-run) ===
+INC-001  [dry-run] sanity-executor/isolate_host -> edr:Machine.Isolate on payroll-db-01
+INC-002  [dry-run] sanity-executor/block_public_access -> storage:Account.UpdateNetworkRules on stg-customer-exports
+INC-003  [dry-run] sanity-executor/revoke_sessions -> graph:User.RevokeSessions on j.admin
+INC-003  [dry-run] sanity-executor/reset_password -> graph:User.ResetPassword on j.admin
+
+=== 5. Learn: the rejected false positive tunes the next run ===
+LRN-001 suppress {'rule': 'dlp-large-upload', 'entity': 's.kim'} until 2026-12-19 (owner alice.analyst)
+run 2: 1,140 suppressed (was 1,130); dropped from queue: data_exfiltration:s.kim; newly surfaced: authentication:user088
+
+=== 6. Incident summary from logs + chat (secrets redacted) ===
+# INC-001: 10 alerts from edr, siem on payroll-db-01 since 03:00 UTC point to malware activity on a host.
+
+**Severity** critical · **Score** 23.4 · **Owner** finance-platform · **Sources** edr, siem · **Alerts** 10
+
+**Why it matters:** payroll-db-01 is crown jewel; can reach crown jewels: kv-finance; corroborated by independent sources
+
+**Blast radius:** payroll-app, kv-finance
+
+> ⚠️ prompt_injection_in_alert_data:override,role_hijack,mode_switch,verdict_steering
+
+## Timeline (UTC)
+
+| Time | Source | Event |
+|---|---|---|
+| 03:00 | EDR | Malware executed on payroll database server (4× until 03:09) |
+| 03:06 | chat:oncall.sec | EDR critical on payroll-db-01, looking now |
+| 03:09 | chat:dba.lee | I logged in with the break-glass account, password is [REDACTED_PASSWORD] if you need it |
+| 03:11 | SIEM | Beaconing to known C2 infrastructure (6× until 03:57) |
+| 03:14 | chat:oncall.sec | Seeing beaconing to 192.0.2.77 every 60s. Requesting host isolation approval |
+| 03:21 | chat:ir.lead | Approved. Isolate payroll-db-01, rotate the break-glass credential, page finance-platform |
+| 04:02 | chat:oncall.sec | Host isolated. Beaconing stopped. Imaging disk for forensics |
+
+
+=== 7. Compliance evidence mapped to controls ===
+PASS  MFA-ADMINS       MFA enforced for all privileged accounts             SOC2 CC6.1
+FAIL  STORAGE-PRIVATE  No storage account allows public blob access         SOC2 CC6.6
+FAIL  KV-LOGGING       Diagnostic logging enabled on every Key Vault        SOC2 CC7.2
+FAIL  KEY-ROTATION     Access keys rotated within 90 days                   SOC2 CC6.1
+PASS  EDR-COVERAGE     EDR sensor healthy on all production servers         SOC2 CC7.1
+FAIL  DORMANT-ADMINS   No privileged account dormant for more than 90 days  SOC2 CC6.2
+
+=== 8. Audit trail ===
+34 audit records · hash chain INTACT
+
+=== The outcome ===
+                    Before                  With AI + guardrails
+Alerts you read     1,798 (all of them)     10 incidents, ranked, with context
+Noise filtered      by hand                 1,140 alerts, every rule owned and expiring
+Timeline at 4 a.m.  written by hand         drafted from logs and chat
+Audit evidence      screenshots             6 controls hashed and mapped
+Who decides         you                     still you. AI suggests, it never acts alone
+
+Reports written to demo-out/
